@@ -457,6 +457,28 @@ button { color: inherit; }
   100% { opacity: .97; transform: translateY(0) scaleX(1) scaleY(1); filter: brightness(1.035) saturate(1.07); }
 }
 
+/* Experimental SVG density treatment for the two main score charts only.
+   Geometry, spacing, counts, labels and animations remain controlled by the existing chart CSS. */
+.density-filter-defs { position: absolute; width: 0; height: 0; overflow: visible; pointer-events: none; }
+.bar-stack i.svg-density-mark,
+.rating-marks i.svg-density-mark {
+  overflow: visible;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.bar-stack i.svg-density-mark::before,
+.bar-stack i.svg-density-mark::after,
+.rating-marks i.svg-density-mark::before,
+.rating-marks i.svg-density-mark::after {
+  content: none;
+  display: none;
+}
+.svg-density-mark > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.svg-density-mark .density-shell { fill: var(--density-low); }
+.svg-density-mark .density-midline { fill: var(--density-mid); }
+.svg-density-mark .density-hot-core { fill: var(--density-hot); }
+
 .distribution-panel { display: flex; flex-direction: column; }
 .distribution-chart { flex: 1; display: flex; flex-direction: column; justify-content: center; margin-top: 1rem; }
 .bin-header, .distribution-row { display: grid; grid-template-columns: 110px repeat(9, 1fr); gap: 6px; align-items: end; }

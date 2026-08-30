@@ -102,6 +102,42 @@ function densityVars(palette: DensityPalette, index: number) {
   } as React.CSSProperties;
 }
 
+function DensityGlowDefs({ id }: { id: string }) {
+  return (
+    <svg className="density-filter-defs" aria-hidden="true" width="0" height="0">
+      <defs>
+        <filter id={id} x="-16%" y="-120%" width="132%" height="340%" colorInterpolationFilters="sRGB">
+          <feGaussianBlur stdDeviation="1.25" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+    </svg>
+  );
+}
+
+function DensityCapsule({
+  palette,
+  index,
+  glowId,
+}: {
+  palette: DensityPalette;
+  index: number;
+  glowId: string;
+}) {
+  return (
+    <i className="svg-density-mark" style={densityVars(palette, index)} aria-hidden="true">
+      <svg viewBox="0 0 100 6" preserveAspectRatio="none">
+        <rect className="density-shell" x="0.5" y="0.5" width="99" height="5" rx="2.5" />
+        <rect className="density-midline" x="2.5" y="1.2" width="95" height="3.6" rx="1.8" filter={`url(#${glowId})`} />
+        <rect className="density-hot-core" x="9" y="2" width="82" height="2" rx="1" />
+      </svg>
+    </i>
+  );
+}
+
 const dimensions: Array<{ key: ScoreKey; label: string; description: string }> = [
   { key: "autonomy", label: "Autonomy", description: "feeling in control" },
   { key: "competence", label: "Competence", description: "feeling good at something" },
@@ -322,6 +358,7 @@ function DistributionVisual() {
   const { ref, isVisible } = useInViewReplay<HTMLDivElement>();
   return (
     <div ref={ref} className={`viz-panel distribution-panel motion-panel sound-bars ${isVisible ? "is-playing" : ""}`} key="distribution">
+      <DensityGlowDefs id="density-glow-green" />
       <div className="viz-heading-row">
         <div><p className="viz-kicker">Three basic psychological needs</p><h3>A positive pattern across all three needs</h3></div>
         <span className="scale-pill">1 not at all · 9 fully supported</span>
@@ -335,7 +372,7 @@ function DistributionVisual() {
               const count = data.scoreDistribution[dimension.key][String(bin)];
               return <div className="bar-cell" key={bin} title={`${dimension.label}: ${count} participants scored ${bin}`}>
                 <div className="bar-stack" aria-hidden="true">
-                  {Array.from({ length: count }, (_, index) => <i key={index} style={densityVars(DENSITY.greenDark, index)} />)}
+                  {Array.from({ length: count }, (_, index) => <DensityCapsule key={index} palette={DENSITY.greenDark} index={index} glowId="density-glow-green" />)}
                 </div>
                 {count > 0 && <span className="bar-count" aria-hidden="true">{count}</span>}
               </div>;
@@ -356,6 +393,7 @@ function RatingVisual() {
   const { ref, isVisible } = useInViewReplay<HTMLDivElement>();
   return (
     <div ref={ref} className={`viz-panel rating-panel motion-panel sound-bars ${isVisible ? "is-playing" : ""}`} key="ratings">
+      <DensityGlowDefs id="density-glow-red" />
       <div className="viz-heading-row">
         <div><p className="viz-kicker">Young people&apos;s own view</p><h3>Young people rated their experiences highly</h3></div>
         <span className="scale-pill rating">Observed 0–10 scale</span>
@@ -365,7 +403,7 @@ function RatingVisual() {
         {bins.map((bin) => (
           <div className="rating-column" key={bin}>
             <div className="rating-marks">
-              {Array.from({ length: data.ratingDistribution[String(bin)] }, (_, index) => <i key={index} style={densityVars(DENSITY.redDark, index)} />)}
+              {Array.from({ length: data.ratingDistribution[String(bin)] }, (_, index) => <DensityCapsule key={index} palette={DENSITY.redDark} index={index} glowId="density-glow-red" />)}
             </div>
             <strong>{bin}</strong>
             <span className="rating-count">{data.ratingDistribution[String(bin)]} participants</span>
@@ -610,9 +648,7 @@ function WordCloudVisual({ active }: { active: number }) {
   const requestedMode: CloudMode = active === 0 ? "positive" : active === 1 ? "negative" : "explore";
   const [mode, setMode] = useState<CloudMode>(requestedMode);
   const [filter, setFilter] = useState<CloudFilter>({ sentiment: "All", category: "All", ageGroup: "All", gender: "All", sector: "All" });
-  const [selectedWordKey, setSelectedWordKey] = useState<string>("good|Positive");
-  const [hoveredWordKey, setHoveredWordKey] = useState<string | null>(null);
-  const [quoteIndex, setQuoteIndex] = useState(0);
+  const [selectedWord, setSelectedWord] = useState<string>("good");
   const { ref: cloudStageRef, aspect: cloudAspect } = useElementAspect<HTMLDivElement>();
 
   useEffect(() => {
@@ -647,23 +683,8 @@ function WordCloudVisual({ active }: { active: number }) {
 
   const words = cloudWords[mode];
 
-  const selected = words.find((word) => `${word.word}|${word.sentiment}` === selectedWordKey) ?? words[0];
-  const hovered = hoveredWordKey ? words.find((word) => `${word.word}|${word.sentiment}` === hoveredWordKey) : undefined;
-  const displayedWord = hovered ?? selected;
+  const selected = words.find((word) => word.word === selectedWord) ?? words[0];
   const quotes = selected ? data.quotes[selected.word]?.[selected.sentiment] ?? [] : [];
-  const displayedQuotes = displayedWord ? data.quotes[displayedWord.word]?.[displayedWord.sentiment] ?? [] : [];
-  const selectedQuoteKey = selected ? `${selected.word}|${selected.sentiment}` : "";
-  const isHoverPreview = Boolean(hovered && `${hovered.word}|${hovered.sentiment}` !== selectedQuoteKey);
-  const displayedQuote = displayedQuotes.length ? displayedQuotes[isHoverPreview ? 0 : quoteIndex % displayedQuotes.length] : undefined;
-
-  useEffect(() => {
-    setQuoteIndex(0);
-  }, [selectedQuoteKey]);
-
-  useEffect(() => {
-    setHoveredWordKey(null);
-  }, [mode]);
-
   return (
     <div className={`viz-panel cloud-panel motion-panel cloud-mode-${mode}`}>
       <div className="viz-heading-row compact">
@@ -686,14 +707,13 @@ function WordCloudVisual({ active }: { active: number }) {
                   fill={word.sentiment === "Positive" ? COLORS.positive : COLORS.negative}
                   fontSize={word.fontSize}
                   className="cloud-word"
-                  style={{ "--word-index": Math.min(index, 38), "--word-opacity": isActive && selected && `${selected.word}|${selected.sentiment}` !== `${word.word}|${word.sentiment}` ? 0.77 : 1 } as React.CSSProperties}
+                  style={{ "--word-index": Math.min(index, 38), "--word-opacity": isActive && selected && selected.word !== word.word ? 0.77 : 1 } as React.CSSProperties}
                   tabIndex={isActive ? 0 : -1}
                   role={isActive ? "button" : undefined}
                   aria-label={isActive ? `${word.word}, ${word.sentiment.toLowerCase()} theme` : undefined}
-                  onMouseEnter={isActive ? () => setHoveredWordKey(`${word.word}|${word.sentiment}`) : undefined}
-                  onMouseLeave={isActive ? () => setHoveredWordKey(null) : undefined}
-                  onFocus={isActive ? () => { setSelectedWordKey(`${word.word}|${word.sentiment}`); setQuoteIndex(0); } : undefined}
-                  onClick={isActive ? () => { setSelectedWordKey(`${word.word}|${word.sentiment}`); setQuoteIndex(0); } : undefined}
+                  onMouseEnter={isActive ? () => setSelectedWord(word.word) : undefined}
+                  onFocus={isActive ? () => setSelectedWord(word.word) : undefined}
+                  onClick={isActive ? () => setSelectedWord(word.word) : undefined}
                 >{word.word}</text>
               ))}
             </svg> : <div className="cloud-empty">No words match these filters.</div>}
@@ -701,36 +721,8 @@ function WordCloudVisual({ active }: { active: number }) {
         })}
       </div>
       <div className="voice-panel">
-        <div>
-          <Quote size={19} /><span>In their words</span><strong>{displayedWord?.word ?? "—"}</strong>
-          <small style={{ gridColumn: "1 / -1", marginTop: "0.3rem", color: "#c4d1da", fontSize: "0.64rem", letterSpacing: "0.03em", textTransform: "none" }}>Hover to preview · Click a word to lock</small>
-        </div>
-        <blockquote>
-          <span style={{ display: "block" }}>{displayedQuote ? `“${displayedQuote}”` : "Hover or focus on a word to see an anonymized reflection excerpt."}</span>
-          {quotes.length > 1 && <button
-            type="button"
-            disabled={isHoverPreview}
-            aria-hidden={isHoverPreview}
-            aria-label={`Show another quotation associated with ${selected?.word ?? "this word"}`}
-            onClick={() => setQuoteIndex((current) => (current + 1) % quotes.length)}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.32rem",
-              marginTop: "0.45rem",
-              padding: 0,
-              border: 0,
-              background: "transparent",
-              color: "#8fa6b6",
-              font: "inherit",
-              fontSize: "0.72rem",
-              fontStyle: "normal",
-              letterSpacing: "0.06em",
-              cursor: "pointer",
-              visibility: isHoverPreview ? "hidden" : "visible",
-            }}
-          >Another voice <span aria-hidden="true">↻</span></button>}
-        </blockquote>
+        <div><Quote size={19} /><span>In their words</span><strong>{selected?.word ?? "—"}</strong></div>
+        <blockquote>{quotes[0] ? `“${quotes[0]}”` : "Hover or focus on a word to see an anonymized reflection excerpt."}</blockquote>
       </div>
       {mode === "explore" && <div className="cloud-controls" aria-label="Word cloud filters">
         <FilterSelect label="Sentiment" value={filter.sentiment} options={["All", "Positive", "Negative"]} onChange={(sentiment) => setFilter({ ...filter, sentiment })} />
