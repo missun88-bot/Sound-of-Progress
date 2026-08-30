@@ -578,11 +578,18 @@ button { color: inherit; }
 .sentiment-key { display: flex; gap: .85rem; color: #a9b6be; font-size: .73rem; }
 .sentiment-key span { display: flex; align-items: center; gap: .35rem; }
 .sentiment-key i { width: 9px; height: 9px; }
-.cloud-stage { min-height: 400px; margin-top: 1rem; border-radius: 1rem; background: radial-gradient(circle at center, #071018, #000 70%); }
-.cloud-stage svg { display: block; width: 100%; height: auto; max-height: 500px; }
-.cloud-word { cursor: pointer; font-family: inherit; transition: opacity .18s ease, filter .18s ease; outline: none; }
+.cloud-stage { position: relative; isolation: isolate; min-height: 400px; margin-top: 1rem; overflow: hidden; border-radius: 1rem; background: radial-gradient(circle at center, #071018, #000 70%); }
+.cloud-layer { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; opacity: 0; transform: scale(.965); filter: blur(3px); pointer-events: none; transition: opacity 1.15s ease, transform 1.35s cubic-bezier(.2,.72,.28,1), filter .9s ease; }
+.cloud-layer.is-active { z-index: 2; opacity: 1; transform: scale(1); filter: blur(0); pointer-events: auto; }
+.cloud-layer svg { display: block; width: 100%; height: 100%; max-height: 500px; }
+.cloud-word { cursor: pointer; font-family: inherit; opacity: var(--word-opacity, 1); transition: opacity .18s ease, filter .18s ease; outline: none; }
+.cloud-layer.is-active .cloud-word { animation: cloud-word-arrive .82s cubic-bezier(.2,.72,.28,1) both; animation-delay: calc(.08s + var(--word-index, 0) * 11ms); }
 .cloud-word:hover, .cloud-word:focus { opacity: 1 !important; filter: drop-shadow(0 0 5px currentColor); }
 .cloud-empty { min-height: 400px; display: grid; place-items: center; color: #7890a1; }
+@keyframes cloud-word-arrive {
+  from { opacity: 0; transform: scale(.9); filter: blur(2px); }
+  to { opacity: var(--word-opacity, 1); transform: scale(1); filter: blur(0); }
+}
 .voice-panel { min-height: 84px; display: grid; grid-template-columns: 160px 1fr; gap: 1rem; align-items: center; margin-top: .8rem; padding: .85rem 1rem; border-left: 2px solid #f4d800; background: #0b1b28; }
 .voice-panel > div { display: grid; grid-template-columns: auto 1fr; column-gap: .5rem; align-items: center; color: #88a0af; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
 .voice-panel > div strong { grid-column: 1 / -1; margin-top: .2rem; color: #f4d800; font-size: 1.4rem; letter-spacing: -.02em; text-transform: none; }
