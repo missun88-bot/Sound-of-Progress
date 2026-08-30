@@ -102,42 +102,6 @@ function densityVars(palette: DensityPalette, index: number) {
   } as React.CSSProperties;
 }
 
-function DensityGlowDefs({ id }: { id: string }) {
-  return (
-    <svg className="density-filter-defs" aria-hidden="true" width="0" height="0">
-      <defs>
-        <filter id={id} x="-16%" y="-120%" width="132%" height="340%" colorInterpolationFilters="sRGB">
-          <feGaussianBlur stdDeviation="1.25" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-    </svg>
-  );
-}
-
-function DensityCapsule({
-  palette,
-  index,
-  glowId,
-}: {
-  palette: DensityPalette;
-  index: number;
-  glowId: string;
-}) {
-  return (
-    <i className="svg-density-mark" style={densityVars(palette, index)} aria-hidden="true">
-      <svg viewBox="0 0 100 6" preserveAspectRatio="none">
-        <rect className="density-shell" x="0.5" y="0.5" width="99" height="5" rx="2.5" />
-        <rect className="density-midline" x="2.5" y="1.2" width="95" height="3.6" rx="1.8" filter={`url(#${glowId})`} />
-        <rect className="density-hot-core" x="9" y="2" width="82" height="2" rx="1" />
-      </svg>
-    </i>
-  );
-}
-
 const dimensions: Array<{ key: ScoreKey; label: string; description: string }> = [
   { key: "autonomy", label: "Autonomy", description: "feeling in control" },
   { key: "competence", label: "Competence", description: "feeling good at something" },
@@ -358,7 +322,6 @@ function DistributionVisual() {
   const { ref, isVisible } = useInViewReplay<HTMLDivElement>();
   return (
     <div ref={ref} className={`viz-panel distribution-panel motion-panel sound-bars ${isVisible ? "is-playing" : ""}`} key="distribution">
-      <DensityGlowDefs id="density-glow-green" />
       <div className="viz-heading-row">
         <div><p className="viz-kicker">Three basic psychological needs</p><h3>A positive pattern across all three needs</h3></div>
         <span className="scale-pill">1 not at all · 9 fully supported</span>
@@ -372,7 +335,7 @@ function DistributionVisual() {
               const count = data.scoreDistribution[dimension.key][String(bin)];
               return <div className="bar-cell" key={bin} title={`${dimension.label}: ${count} participants scored ${bin}`}>
                 <div className="bar-stack" aria-hidden="true">
-                  {Array.from({ length: count }, (_, index) => <DensityCapsule key={index} palette={DENSITY.greenDark} index={index} glowId="density-glow-green" />)}
+                  {Array.from({ length: count }, (_, index) => <i key={index} style={densityVars(DENSITY.greenDark, index)} />)}
                 </div>
                 {count > 0 && <span className="bar-count" aria-hidden="true">{count}</span>}
               </div>;
@@ -393,7 +356,6 @@ function RatingVisual() {
   const { ref, isVisible } = useInViewReplay<HTMLDivElement>();
   return (
     <div ref={ref} className={`viz-panel rating-panel motion-panel sound-bars ${isVisible ? "is-playing" : ""}`} key="ratings">
-      <DensityGlowDefs id="density-glow-red" />
       <div className="viz-heading-row">
         <div><p className="viz-kicker">Young people&apos;s own view</p><h3>Young people rated their experiences highly</h3></div>
         <span className="scale-pill rating">Observed 0–10 scale</span>
@@ -403,7 +365,7 @@ function RatingVisual() {
         {bins.map((bin) => (
           <div className="rating-column" key={bin}>
             <div className="rating-marks">
-              {Array.from({ length: data.ratingDistribution[String(bin)] }, (_, index) => <DensityCapsule key={index} palette={DENSITY.redDark} index={index} glowId="density-glow-red" />)}
+              {Array.from({ length: data.ratingDistribution[String(bin)] }, (_, index) => <i key={index} style={densityVars(DENSITY.redDark, index)} />)}
             </div>
             <strong>{bin}</strong>
             <span className="rating-count">{data.ratingDistribution[String(bin)]} participants</span>
