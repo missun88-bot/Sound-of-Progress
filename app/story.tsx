@@ -610,7 +610,9 @@ function WordCloudVisual({ active }: { active: number }) {
   const requestedMode: CloudMode = active === 0 ? "positive" : active === 1 ? "negative" : "explore";
   const [mode, setMode] = useState<CloudMode>(requestedMode);
   const [filter, setFilter] = useState<CloudFilter>({ sentiment: "All", category: "All", ageGroup: "All", gender: "All", sector: "All" });
-  const [selectedWord, setSelectedWord] = useState<string>("good");
+  const [selectedWordKey, setSelectedWordKey] = useState<string>("good|Positive");
+  const [hoveredWordKey, setHoveredWordKey] = useState<string | null>(null);
+  const [quoteIndex, setQuoteIndex] = useState(0);
   const { ref: cloudStageRef, aspect: cloudAspect } = useElementAspect<HTMLDivElement>();
 
   useEffect(() => {
@@ -645,8 +647,23 @@ function WordCloudVisual({ active }: { active: number }) {
 
   const words = cloudWords[mode];
 
-  const selected = words.find((word) => word.word === selectedWord) ?? words[0];
+  const selected = words.find((word) => `${word.word}|${word.sentiment}` === selectedWordKey) ?? words[0];
+  const hovered = hoveredWordKey ? words.find((word) => `${word.word}|${word.sentiment}` === hoveredWordKey) : undefined;
+  const displayedWord = hovered ?? selected;
   const quotes = selected ? data.quotes[selected.word]?.[selected.sentiment] ?? [] : [];
+  const displayedQuotes = displayedWord ? data.quotes[displayedWord.word]?.[displayedWord.sentiment] ?? [] : [];
+  const selectedQuoteKey = selected ? `${selected.word}|${selected.sentiment}` : "";
+  const isHoverPreview = Boolean(hovered && `${hovered.word}|${hovered.sentiment}` !== selectedQuoteKey);
+  const displayedQuote = displayedQuotes.length ? displayedQuotes[isHoverPreview ? 0 : quoteIndex % displayedQuotes.length] : undefined;
+
+  useEffect(() => {
+    setQuoteIndex(0);
+  }, [selectedQuoteKey]);
+
+  useEffect(() => {
+    setHoveredWordKey(null);
+  }, [mode]);
+
   return (
     <div className={`viz-panel cloud-panel motion-panel cloud-mode-${mode}`}>
       <div className="viz-heading-row compact">
@@ -669,13 +686,14 @@ function WordCloudVisual({ active }: { active: number }) {
                   fill={word.sentiment === "Positive" ? COLORS.positive : COLORS.negative}
                   fontSize={word.fontSize}
                   className="cloud-word"
-                  style={{ "--word-index": Math.min(index, 38), "--word-opacity": isActive && selected && selected.word !== word.word ? 0.77 : 1 } as React.CSSProperties}
+                  style={{ "--word-index": Math.min(index, 38), "--word-opacity": isActive && selected && `${selected.word}|${selected.sentiment}` !== `${word.word}|${word.sentiment}` ? 0.77 : 1 } as React.CSSProperties}
                   tabIndex={isActive ? 0 : -1}
                   role={isActive ? "button" : undefined}
                   aria-label={isActive ? `${word.word}, ${word.sentiment.toLowerCase()} theme` : undefined}
-                  onMouseEnter={isActive ? () => setSelectedWord(word.word) : undefined}
-                  onFocus={isActive ? () => setSelectedWord(word.word) : undefined}
-                  onClick={isActive ? () => setSelectedWord(word.word) : undefined}
+                  onMouseEnter={isActive ? () => setHoveredWordKey(`${word.word}|${word.sentiment}`) : undefined}
+                  onMouseLeave={isActive ? () => setHoveredWordKey(null) : undefined}
+                  onFocus={isActive ? () => { setSelectedWordKey(`${word.word}|${word.sentiment}`); setQuoteIndex(0); } : undefined}
+                  onClick={isActive ? () => { setSelectedWordKey(`${word.word}|${word.sentiment}`); setQuoteIndex(0); } : undefined}
                 >{word.word}</text>
               ))}
             </svg> : <div className="cloud-empty">No words match these filters.</div>}
@@ -683,8 +701,36 @@ function WordCloudVisual({ active }: { active: number }) {
         })}
       </div>
       <div className="voice-panel">
-        <div><Quote size={19} /><span>In their words</span><strong>{selected?.word ?? "—"}</strong></div>
-        <blockquote>{quotes[0] ? `“${quotes[0]}”` : "Hover or focus on a word to see an anonymized reflection excerpt."}</blockquote>
+        <div>
+          <Quote size={19} /><span>In their words</span><strong>{displayedWord?.word ?? "—"}</strong>
+          <small style={{ gridColumn: "1 / -1", marginTop: "0.3rem", color: "#c4d1da", fontSize: "0.64rem", letterSpacing: "0.03em", textTransform: "none" }}>Hover to preview · Click a word to lock</small>
+        </div>
+        <blockquote>
+          <span style={{ display: "block" }}>{displayedQuote ? `“${displayedQuote}”` : "Hover or focus on a word to see an anonymized reflection excerpt."}</span>
+          {quotes.length > 1 && <button
+            type="button"
+            disabled={isHoverPreview}
+            aria-hidden={isHoverPreview}
+            aria-label={`Show another quotation associated with ${selected?.word ?? "this word"}`}
+            onClick={() => setQuoteIndex((current) => (current + 1) % quotes.length)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.32rem",
+              marginTop: "0.45rem",
+              padding: 0,
+              border: 0,
+              background: "transparent",
+              color: "#8fa6b6",
+              font: "inherit",
+              fontSize: "0.72rem",
+              fontStyle: "normal",
+              letterSpacing: "0.06em",
+              cursor: "pointer",
+              visibility: isHoverPreview ? "hidden" : "visible",
+            }}
+          >Another voice <span aria-hidden="true">↻</span></button>}
+        </blockquote>
       </div>
       {mode === "explore" && <div className="cloud-controls" aria-label="Word cloud filters">
         <FilterSelect label="Sentiment" value={filter.sentiment} options={["All", "Positive", "Negative"]} onChange={(sentiment) => setFilter({ ...filter, sentiment })} />
