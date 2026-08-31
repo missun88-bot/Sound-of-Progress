@@ -367,9 +367,7 @@ function Hero() {
         <p className="hero-kicker"><Headphones size={17} /> Noise Solution × Data ChangeMakers</p>
         <h1>The Sound<br />of Progress</h1>
         <p className="hero-deck">
-          Noise Solution uses music mentoring to create conditions that support three basic psychological needs:
-          feeling in control, feeling good at something and feeling seen. Across 35 young people and 228 mentoring sessions,
-          the results point to an encouraging overall picture—while showing that progress can look different for every person.
+          Noise Solution uses music mentoring to create conditions that support three basic psychological needs: autonomy, competence and relatedness—feeling in control, feeling good at something, and feeling connected to and valued by others. This analysis draws on reflections from 35 young people across 228 mentoring sessions. The results point to an encouraging overall picture, while also showing that progress can look different for each person.
         </p>
         <div className="hero-stats" aria-label="Project overview">
           <div><strong>{data.meta.participants}</strong><span>young people</span></div>
