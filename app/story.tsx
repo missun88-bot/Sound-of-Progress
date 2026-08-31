@@ -971,7 +971,7 @@ export default function Story() {
     {
       kicker: "Young people’s own view",
       title: "Their own ratings reinforce the positive picture.",
-      body: <><p>For 30 participants, a separate overall rating captures their own view of the experience.</p><p>Those ratings are strikingly positive: rounded participant averages range from 7 to 10, and 10 is by far the most common.</p></>,
+      body: <><p>For 30 of the 35 participants, a separate overall rating captures their own view of the experience; ratings were not available for the other five.</p><p>Those ratings are strikingly positive: rounded participant averages range from 7 to 10, and 10 is by far the most common.</p></>,
     },
   ];
 
