@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   ArrowDown,
   CircleHelp,
@@ -67,11 +67,11 @@ type StoryData = {
 const data = rawData as unknown as StoryData;
 
 const COLORS = {
-  // Exact perspective colours used in the source Tableau workbook.
-  autonomy: "#f4e528",
-  competence: "#12aeeb",
-  relatedness: "#c589b5",
-  rating: "#e15759",
+  // Approved web circle palette, tuned to the Noise Solution theme.
+  autonomy: "#c7fd14",
+  competence: "#35d9ff",
+  relatedness: "#9f73fc",
+  rating: "#7c2932",
   positive: "#b8ff00",
   negative: "#8c5bff",
   orange: "#ff7138",
@@ -100,6 +100,90 @@ function densityVars(palette: DensityPalette, index: number) {
     "--density-hot": palette.hot,
     "--mark-index": index,
   } as React.CSSProperties;
+}
+
+const APPROVED_DISTRIBUTION_NEON = {
+  outerBlur: 5.9,
+  innerBlur: 1.0,
+  crispStroke: 4.8,
+  outerStrength: 3.8,
+  innerStrength: 0.7,
+  linePitch: 7.3,
+};
+
+const APPROVED_DISTRIBUTION_PALETTE: Record<ScoreKey, { outer: string; inner: string; crisp: string }> = {
+  autonomy: { outer: "#5c9f00", inner: "#efffc9", crisp: "#c7fd14" },
+  competence: { outer: "#087f99", inner: "#dcfaff", crisp: "#35d9ff" },
+  relatedness: { outer: "#5c3ba3", inner: "#efe7ff", crisp: "#9f73fc" },
+};
+
+const APPROVED_RED_NEON = {
+  outer: "#7b2730",
+  inner: "#ffe1e3",
+  crisp: "#e15759",
+  outerBlur: 4.4,
+  innerBlur: 4.0,
+  crispStroke: 4.6,
+  outerStrength: 5.7,
+  innerStrength: 1.9,
+  linePitch: 16.0,
+};
+
+function ApprovedDistributionNeonMark({ id, index, dimension }: { id: string; index: number; dimension: ScoreKey }) {
+  const outerId = `${id}-outer`;
+  const innerId = `${id}-inner`;
+  const palette = APPROVED_DISTRIBUTION_PALETTE[dimension];
+  return (
+    <i className="approved-neon-mark" style={{ "--mark-index": index } as React.CSSProperties}>
+      <svg viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <filter id={outerId} filterUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="72" colorInterpolationFilters="sRGB">
+            <feGaussianBlur stdDeviation={APPROVED_DISTRIBUTION_NEON.outerBlur} result="blur" />
+            <feComponentTransfer in="blur" result="boostedOuter">
+              <feFuncA type="linear" slope={APPROVED_DISTRIBUTION_NEON.outerStrength} />
+            </feComponentTransfer>
+          </filter>
+          <filter id={innerId} filterUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="72" colorInterpolationFilters="sRGB">
+            <feGaussianBlur stdDeviation={APPROVED_DISTRIBUTION_NEON.innerBlur} result="blur" />
+            <feComponentTransfer in="blur" result="boostedInner">
+              <feFuncA type="linear" slope={APPROVED_DISTRIBUTION_NEON.innerStrength} />
+            </feComponentTransfer>
+          </filter>
+        </defs>
+        <line x1="8" y1="16" x2="92" y2="16" stroke={palette.outer} strokeWidth={APPROVED_DISTRIBUTION_NEON.crispStroke} strokeLinecap="round" vectorEffect="non-scaling-stroke" filter={`url(#${outerId})`} opacity=".95" />
+        <line x1="8" y1="16" x2="92" y2="16" stroke={palette.inner} strokeWidth={APPROVED_DISTRIBUTION_NEON.crispStroke * 0.48} strokeLinecap="round" vectorEffect="non-scaling-stroke" filter={`url(#${innerId})`} opacity=".82" />
+        <line x1="8" y1="16" x2="92" y2="16" stroke={palette.crisp} strokeWidth={APPROVED_DISTRIBUTION_NEON.crispStroke} strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+      </svg>
+    </i>
+  );
+}
+
+function ApprovedRedNeonMark({ id, index }: { id: string; index: number }) {
+  const outerId = `${id}-outer`;
+  const innerId = `${id}-inner`;
+  return (
+    <i className="approved-red-neon-mark" style={{ "--mark-index": index } as React.CSSProperties}>
+      <svg viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <filter id={outerId} filterUnits="userSpaceOnUse" x="-24" y="-24" width="148" height="80" colorInterpolationFilters="sRGB">
+            <feGaussianBlur stdDeviation={APPROVED_RED_NEON.outerBlur} result="blur" />
+            <feComponentTransfer in="blur" result="boostedOuter">
+              <feFuncA type="linear" slope={APPROVED_RED_NEON.outerStrength} />
+            </feComponentTransfer>
+          </filter>
+          <filter id={innerId} filterUnits="userSpaceOnUse" x="-24" y="-24" width="148" height="80" colorInterpolationFilters="sRGB">
+            <feGaussianBlur stdDeviation={APPROVED_RED_NEON.innerBlur} result="blur" />
+            <feComponentTransfer in="blur" result="boostedInner">
+              <feFuncA type="linear" slope={APPROVED_RED_NEON.innerStrength} />
+            </feComponentTransfer>
+          </filter>
+        </defs>
+        <line x1="8" y1="16" x2="92" y2="16" stroke={APPROVED_RED_NEON.outer} strokeWidth={APPROVED_RED_NEON.crispStroke} strokeLinecap="round" vectorEffect="non-scaling-stroke" filter={`url(#${outerId})`} opacity=".95" />
+        <line x1="8" y1="16" x2="92" y2="16" stroke={APPROVED_RED_NEON.inner} strokeWidth={APPROVED_RED_NEON.crispStroke * 0.48} strokeLinecap="round" vectorEffect="non-scaling-stroke" filter={`url(#${innerId})`} opacity=".82" />
+        <line x1="8" y1="16" x2="92" y2="16" stroke={APPROVED_RED_NEON.crisp} strokeWidth={APPROVED_RED_NEON.crispStroke} strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+      </svg>
+    </i>
+  );
 }
 
 const dimensions: Array<{ key: ScoreKey; label: string; description: string }> = [
@@ -319,6 +403,7 @@ function NeonStack({ label, value, palette }: { label: string; value: number; pa
 
 function DistributionVisual() {
   const bins = Array.from({ length: 9 }, (_, index) => index + 1);
+  const neonInstanceId = useId().replace(/:/g, "");
   const { ref, isVisible } = useInViewReplay<HTMLDivElement>();
   return (
     <div ref={ref} className={`viz-panel distribution-panel motion-panel sound-bars ${isVisible ? "is-playing" : ""}`} key="distribution">
@@ -334,8 +419,14 @@ function DistributionVisual() {
             {bins.map((bin) => {
               const count = data.scoreDistribution[dimension.key][String(bin)];
               return <div className="bar-cell" key={bin} title={`${dimension.label}: ${count} participants scored ${bin}`}>
-                <div className="bar-stack" aria-hidden="true">
-                  {Array.from({ length: count }, (_, index) => <i key={index} style={densityVars(DENSITY.greenDark, index)} />)}
+                <div
+                  className="bar-stack approved-neon-stack"
+                  aria-hidden="true"
+                  style={{ "--approved-neon-pitch": `${APPROVED_DISTRIBUTION_NEON.linePitch}px` } as React.CSSProperties}
+                >
+                  {Array.from({ length: count }, (_, index) => (
+                    <ApprovedDistributionNeonMark key={index} id={`${neonInstanceId}-${dimension.key}-${bin}-${index}`} index={index} dimension={dimension.key} />
+                  ))}
                 </div>
                 {count > 0 && <span className="bar-count" aria-hidden="true">{count}</span>}
               </div>;
@@ -344,7 +435,10 @@ function DistributionVisual() {
         ))}
       </div>
       <div className="dimension-key">
-        {dimensions.map((item) => <span key={item.key}><i style={{ background: DENSITY.greenDark.mid, boxShadow: `0 0 6px ${DENSITY.greenDark.mid}` }} />{item.label}</span>)}
+        {dimensions.map((item) => {
+          const palette = APPROVED_DISTRIBUTION_PALETTE[item.key];
+          return <span key={item.key}><i style={{ background: palette.crisp, boxShadow: `0 0 6px ${palette.outer}` }} />{item.label}</span>;
+        })}
       </div>
       <p className="viz-note">1 capsule = 1 participant. Most participant averages sit between 5 and 7 on the 1–9 scale. Competence is strongest overall; relatedness varies most.</p>
     </div>
@@ -353,6 +447,7 @@ function DistributionVisual() {
 
 function RatingVisual() {
   const bins = [7, 8, 9, 10];
+  const redNeonInstanceId = useId().replace(/:/g, "");
   const { ref, isVisible } = useInViewReplay<HTMLDivElement>();
   return (
     <div ref={ref} className={`viz-panel rating-panel motion-panel sound-bars ${isVisible ? "is-playing" : ""}`} key="ratings">
@@ -362,15 +457,23 @@ function RatingVisual() {
       </div>
       <div className="rating-summary"><strong>10</strong><span>is the most common rounded participant average</span></div>
       <div className="rating-chart" role="img" aria-label="Distribution of participant overall session ratings">
-        {bins.map((bin) => (
-          <div className="rating-column" key={bin}>
-            <div className="rating-marks">
-              {Array.from({ length: data.ratingDistribution[String(bin)] }, (_, index) => <i key={index} style={densityVars(DENSITY.redDark, index)} />)}
+        {bins.map((bin) => {
+          const count = data.ratingDistribution[String(bin)];
+          return (
+            <div className="rating-column" key={bin}>
+              <div
+                className="rating-marks approved-red-neon-stack"
+                style={{ "--approved-red-neon-pitch": `${APPROVED_RED_NEON.linePitch}px` } as React.CSSProperties}
+              >
+                {Array.from({ length: count }, (_, index) => (
+                  <ApprovedRedNeonMark key={index} id={`${redNeonInstanceId}-${bin}-${index}`} index={index} />
+                ))}
+              </div>
+              <span className="rating-count">{count} participant{count === 1 ? "" : "s"}</span>
+              <strong>{bin}</strong>
             </div>
-            <strong>{bin}</strong>
-            <span className="rating-count">{data.ratingDistribution[String(bin)]} participants</span>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <p className="viz-note">Overall ratings were available for 30 of the 35 participants. Their rounded averages range from 7 to 10, with 10 the most common.</p>
     </div>
@@ -394,42 +497,68 @@ function arcPath(cx: number, cy: number, radius: number, startAngle: number, end
 }
 
 function CircleProfile({ profile, large = false }: { profile: Profile; large?: boolean }) {
+  const glowBaseId = useId().replace(/:/g, "");
   const arcRanges: Record<ScoreKey, [number, number]> = {
-    autonomy: [8, 112],
-    competence: [128, 232],
-    relatedness: [248, 352],
+    autonomy: [12, 86],
+    competence: [104, 178],
+    relatedness: [196, 270],
+  };
+  const scoreBoxPositions: Record<ScoreKey, number> = {
+    autonomy: 28,
+    competence: 49,
+    relatedness: 70,
   };
   return (
     <div className={`profile-visual ${large ? "is-large" : ""}`}>
-      <div className="profile-score-row" aria-hidden="true">
-        {dimensions.map((dimension) => <span key={dimension.key} style={{ background: `${COLORS[dimension.key]}66`, borderColor: `${COLORS[dimension.key]}b8` }}>{Math.round(profile.scores[dimension.key])}</span>)}
-      </div>
       <svg viewBox="0 0 150 150" role="img" aria-label={`${profile.label}: AI-derived autonomy ${profile.scores.autonomy.toFixed(1)}, competence ${profile.scores.competence.toFixed(1)}, relatedness ${profile.scores.relatedness.toFixed(1)}; ${profile.scores.rating !== undefined ? `participant overall rating ${profile.scores.rating.toFixed(1)}` : "participant overall rating not available"}`}>
+        <defs>
+          {dimensions.map((dimension) => (
+            <filter key={dimension.key} id={`${glowBaseId}-${dimension.key}`} filterUnits="userSpaceOnUse" x="-20" y="-20" width="190" height="190" colorInterpolationFilters="sRGB">
+              <feGaussianBlur stdDeviation="0.3" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          ))}
+        </defs>
         <g className="profile-record-rings">
           {dimensions.flatMap((dimension) => {
             const score = Math.round(profile.scores[dimension.key]);
             const [start, end] = arcRanges[dimension.key];
-            return Array.from({ length: 9 }, (_, index) => (
+            return Array.from({ length: score }, (_, index) => (
               <path
                 key={`${dimension.key}-${index}`}
                 className="profile-ring"
-                d={arcPath(75, 77, 27 + index * 4.1, start, end)}
+                d={arcPath(77, 78, 27 + index * 6, start, end)}
                 fill="none"
                 stroke={COLORS[dimension.key]}
-                strokeWidth="2.4"
+                strokeWidth="1.5"
                 strokeLinecap="round"
                 pathLength={100}
-                style={{ "--ring-index": index, opacity: index < score ? 1 : 0.11 } as React.CSSProperties}
+                filter={`url(#${glowBaseId}-${dimension.key})`}
+                style={{ "--ring-index": index } as React.CSSProperties}
               />
             ));
           })}
         </g>
+        <g className="profile-score-labels" aria-hidden="true">
+          {dimensions.map((dimension) => {
+            const x = scoreBoxPositions[dimension.key];
+            return (
+              <g className="profile-score-box" key={dimension.key}>
+                <rect x={x - 9} y="21" width="18" height="14" rx="1.5" fill={COLORS[dimension.key]} fillOpacity=".58" stroke={COLORS[dimension.key]} strokeWidth=".8" />
+                <text x={x} y="28.4">{Math.round(profile.scores[dimension.key])}</text>
+              </g>
+            );
+          })}
+        </g>
         {profile.scores.rating !== undefined ? <>
-          <circle className="profile-rating-centre" cx="75" cy="77" r="20" fill={COLORS.rating} />
-          <text x="75" y="82" textAnchor="middle" className="rating-text profile-rating-value">{Math.round(profile.scores.rating)}</text>
+          <circle className="profile-rating-centre" cx="77" cy="78" r="18.5" fill={COLORS.rating} stroke="#b85a63" strokeWidth="1.2" />
+          <text x="77" y="82.5" textAnchor="middle" className="rating-text profile-rating-value">{Math.round(profile.scores.rating)}</text>
         </> : <>
-          <circle className="profile-rating-centre profile-rating-missing" cx="75" cy="77" r="20" />
-          <text x="75" y="81" textAnchor="middle" className="rating-text profile-rating-value profile-rating-na">NA</text>
+          <circle className="profile-rating-centre profile-rating-missing" cx="77" cy="78" r="18.5" fill={COLORS.rating} stroke="#b85a63" strokeWidth="1.2" />
+          <text x="77" y="82.5" textAnchor="middle" className="rating-text profile-rating-value profile-rating-na">NA</text>
         </>}
       </svg>
     </div>
